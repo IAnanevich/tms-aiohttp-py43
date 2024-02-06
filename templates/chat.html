@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+</head>
+<body>
+    <ul id="chat"></ul>
+    <input type="text" id="message" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        // Создаем WebSocket соединение
+        const socket = new WebSocket(`ws://localhost:8080/ws`);
+
+        // Обработчик события при получении сообщения от сервера
+        socket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            const chatElement = document.getElementById('chat');
+            const li = document.createElement('li');
+            li.textContent = `${message.text}`;
+            chatElement.appendChild(li);
+        };
+
+        // Функция для отправки сообщения
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = { text: messageInput.value };
+            socket.send(JSON.stringify(message));
+            messageInput.value = '';
+        }
+
+        // Функция для выполнения AJAX-запроса и обновления чата
+        async function getMessages() {
+            try {
+                const response = await fetch('/messages');
+                const data = await response.json();
+                const chatElement = document.getElementById('chat');
+                chatElement.innerHTML = '';  // Очищаем текущий чат
+
+                // Добавляем новые сообщения в чат
+                data.messages.forEach((message) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${message.text}`;
+                    chatElement.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
+        }
+
+        // Вызываем функцию для получения сообщений при загрузке страницы
+        getMessages();
+
+        // Устанавливаем интервал для периодического обновления чата
+        setInterval(getMessages, 500);  // Обновляем каждую 1 секунду (или укажите свой интервал)
+
+        // Отправляем heartbeat каждые 30 секунд для поддержания соединения
+        setInterval(() => {
+            socket.send(JSON.stringify({ type: 'heartbeat' }));
+        }, 30000);
+    </script>
+</body>
+</html>

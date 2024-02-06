@@ -9,6 +9,8 @@ pydantic = "*"
 sqlalchemy = "*"
 aiosqlite = "*"
 greenlet = "*"
+jinja2 = "*"
+aiohttp-jinja2 = "*"
 
 [dev-packages]
 
